@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本史タイムライン - マクロで見る日本の歴史</title>
+  <meta name="description" content="縄文時代から令和まで、約16,000年の日本の歴史をインタラクティブなタイムラインで探索。歴史的人物・出来事・現代との繋がりをわかりやすく紹介。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ======================================================
+         全体ビュー (overview)
+    ====================================================== -->
+    <div v-if="currentView === 'overview'">
+
+      <!-- ヘッダー -->
+      <header class="site-header">
+        <div class="header-inner">
+          <a href="../index.html" class="link-world">🌍 世界史タイムラインへ</a>
+          <div class="header-icon">🗾</div>
+          <h1>日本史タイムライン</h1>
+          <p>縄文時代から令和まで、マクロで見る日本の歴史</p>
+          <div class="header-stats">
+            <span>🗓️ {{ totalEventCount }}件の歴史的出来事</span>
+            <span>👤 {{ totalPeopleCount }}人の歴史上の人物</span>
+            <span>🏛️ {{ eras.length }}の時代区分</span>
+            <span>📅 約16,000年の歴史</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- マクロタイムラインバー -->
+      <section class="macro-section">
+        <div class="macro-section-inner">
+          <h2 class="section-title reveal">⏳ 時代の大きさを比べる</h2>
+          <p class="section-desc reveal reveal-delay-1">
+            各時代の幅は期間の長さを√スケールで表示しています。<br>
+            クリックするとその時代の詳細に移動します。
+          </p>
+
+          <!-- タイムラインバー -->
+          <div class="macro-bar-wrap reveal reveal-delay-2">
+            <div class="macro-bar">
+              <div
+                v-for="era in eras"
+                :key="era.id"
+                class="macro-era-block"
+                :style="{ flex: era.flexValue, backgroundColor: era.color }"
+                :title="era.name + '：' + formatYearRange(era.startYear, era.endYear)"
+                @click="goToEra(era.id)"
+              >
+                <span class="macro-era-label">{{ era.icon }}</span>
+                <span class="macro-era-name-small">{{ era.shortName }}</span>
+              </div>
+            </div>
+            <div class="macro-axis-labels">
+              <span>紀元前14,000年</span>
+              <span>現在 ({{ currentYear }}年)</span>
+            </div>
+          </div>
+
+          <!-- 時代の凡例 -->
+          <div class="macro-legend reveal reveal-delay-3">
+            <div
+              v-for="era in eras"
+              :key="'leg-' + era.id"
+              class="legend-item"
+              @click="goToEra(era.id)"
+            >
+              <span class="legend-dot" :style="{ backgroundColor: era.color }"></span>
+              <span class="legend-name">{{ era.name }}</span>
+              <span class="legend-years">{{ getDurationLabel(era) }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 時代カードグリッド -->
+      <section class="eras-section">
+        <div class="eras-section-inner">
+          <div class="eras-section-header reveal">
+            <div>
+              <h2 class="section-title">📚 時代を選んで深く探る</h2>
+              <p class="section-desc">各カードをクリックすると、その時代をタイムラインで見られます。</p>
+            </div>
+            <!-- イベント編 / 人物編 切り替え -->
+            <div class="view-mode-toggle">
+              <button
+                :class="['toggle-btn', { active: viewMode === 'events' }]"
+                @click="viewMode = 'events'"
+              >📅 イベント編</button>
+              <button
+                :class="['toggle-btn', { active: viewMode === 'people' }]"
+                @click="viewMode = 'people'"
+              >👤 人物編</button>
+            </div>
+          </div>
+
+          <div class="eras-grid">
+            <div
+              v-for="(era, i) in eras"
+              :key="'card-' + era.id"
+              class="era-card reveal"
+              :style="{ '--era-color': era.color, transitionDelay: (i % 4) * 0.07 + 's' }"
+              @click="goToEra(era.id)"
+            >
+              <div class="era-card-top" :style="{ background: era.gradient }">
+                <span class="era-card-icon">{{ era.icon }}</span>
+                <div class="era-card-titles">
+                  <h3>{{ era.name }}</h3>
+                  <span class="era-card-period">{{ formatYearRange(era.startYear, era.endYear) }}</span>
+                </div>
+              </div>
+              <div class="era-card-body">
+                <!-- イベントモード: 時代の説明 -->
+                <p v-if="viewMode === 'events'" class="era-card-desc">{{ era.description }}</p>
+                <!-- 人物モード: 代表人物のプレビュー -->
+                <div v-else class="era-people-preview">
+                  <div v-if="getPeopleCount(era.id) === 0" class="era-people-empty">
+                    📜 人物記録なし（文字記録がない時代）
+                  </div>
+                  <span
+                    v-for="person in getEraTopPeople(era.id)"
+                    :key="person.id"
+                    class="era-person-chip"
+                  >{{ person.icon }} {{ person.name }}</span>
+                  <span v-if="getPeopleCount(era.id) > 3" class="era-person-chip era-person-more">
+                    +{{ getPeopleCount(era.id) - 3 }}人
+                  </span>
+                </div>
+              </div>
+              <div class="era-card-foot">
+                <span class="era-duration-badge">{{ getDurationLabel(era) }}</span>
+                <span v-if="viewMode === 'events'" class="era-events-link">{{ getEventCount(era.id) }}件の出来事 →</span>
+                <span v-else class="era-events-link">{{ getPeopleCount(era.id) }}人の人物 →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================
+         時代詳細ビュー (era)
+    ====================================================== -->
+    <div v-else-if="currentView === 'era' && selectedEra">
+
+      <!-- ナビゲーションバー -->
+      <nav class="era-topnav" :style="{ backgroundColor: selectedEra.color }">
+        <button class="btn-back" @click="goToOverview">
+          ← 全体に戻る
+        </button>
+        <div class="era-topnav-icons">
+          <button
+            v-for="era in eras"
+            :key="'nav-' + era.id"
+            :class="['era-icon-btn', { current: era.id === selectedEra.id }]"
+            :title="era.name"
+            @click="goToEra(era.id)"
+          >{{ era.icon }}</button>
+        </div>
+        <!-- 検索 -->
+        <div class="era-search-wrap">
+          <span class="era-search-icon">🔍</span>
+          <input
+            class="era-search-input"
+            type="text"
+            v-model="searchQuery"
+            :placeholder="viewMode === 'events' ? '出来事を検索...' : '人物を検索...'"
+          >
+        </div>
+        <!-- イベント編 / 人物編 切り替え -->
+        <div class="view-mode-toggle view-mode-toggle--nav">
+          <button
+            :class="['toggle-btn', 'toggle-btn--small', { active: viewMode === 'events' }]"
+            @click="viewMode = 'events'; searchQuery = ''; selectedCategory = ''"
+          >📅 イベント</button>
+          <button
+            :class="['toggle-btn', 'toggle-btn--small', { active: viewMode === 'people' }]"
+            @click="viewMode = 'people'; searchQuery = ''; selectedCategory = ''"
+          >👤 人物</button>
+        </div>
+      </nav>
+
+      <!-- 時代ヘッダー -->
+      <header class="era-header" :style="{ background: selectedEra.gradient }">
+        <div class="era-header-inner">
+          <div class="era-header-icon">{{ selectedEra.icon }}</div>
+          <h1 class="era-header-name">{{ selectedEra.name }}</h1>
+          <p class="era-header-period">{{ formatYearRange(selectedEra.startYear, selectedEra.endYear) }}</p>
+          <p class="era-header-desc">{{ selectedEra.description }}</p>
+          <div class="era-header-stats">
+            <span>⏱️ {{ getDurationLabel(selectedEra) }}</span>
+            <span v-if="viewMode === 'events'">📌 {{ getEventCount(selectedEra.id) }}件の出来事</span>
+            <span v-else>👤 {{ getPeopleCount(selectedEra.id) }}人の歴史上の人物</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- カテゴリフィルター + モバイル検索 -->
+      <div class="era-filter-bar" v-if="currentEraCategories.length > 0">
+        <div class="era-filter-inner">
+          <span class="filter-label">🏷️ フィルター：</span>
+          <div class="category-chips">
+            <button
+              class="category-chip"
+              :class="{ active: selectedCategory === '' }"
+              :style="{ '--era-color': selectedEra.color }"
+              @click="selectedCategory = ''"
+            >すべて ({{ viewMode === 'events' ? filteredEraEvents.length : filteredEraPeople.length }})</button>
+            <button
+              v-for="cat in currentEraCategories"
+              :key="cat.name"
+              class="category-chip"
+              :class="{ active: selectedCategory === cat.name }"
+              :style="{ '--era-color': selectedEra.color }"
+              @click="selectedCategory = selectedCategory === cat.name ? '' : cat.name"
+            >{{ cat.name }} ({{ cat.count }})</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== イベント編タイムライン ===== -->
+      <div v-if="viewMode === 'events'" class="era-timeline-wrap">
+        <div class="era-timeline-line" :style="{ backgroundColor: selectedEra.color }"></div>
+
+        <!-- 検索結果なし -->
+        <div v-if="filteredEraEvents.length === 0" class="no-results">
+          <div class="no-results-icon">🔍</div>
+          <h3>「{{ searchQuery || selectedCategory }}」に一致する出来事が見つかりません</h3>
+          <p>検索キーワードを変えるか、フィルターをリセットしてください。</p>
+        </div>
+
+        <div
+          v-for="(event, index) in filteredEraEvents"
+          :key="event.id"
+          :class="['era-event-item', 'reveal', index % 2 === 0 ? 'item-left' : 'item-right']"
+        >
+          <div class="era-event-year-tag" :style="{ backgroundColor: selectedEra.color }">
+            {{ formatYear(event.year) }}
+          </div>
+          <div
+            class="era-event-dot"
+            :style="{ backgroundColor: selectedEra.color }"
+            @click="openModal(event)"
+          >{{ event.icon || '📌' }}</div>
+          <div
+            class="era-event-card"
+            :style="{ '--card-color': selectedEra.color }"
+            @click="openModal(event)"
+          >
+            <div class="era-event-card-top">
+              <span class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ event.category }}</span>
+            </div>
+            <h3 class="era-event-title">{{ event.title }}</h3>
+            <p class="era-event-desc">{{ event.description }}</p>
+            <div class="era-event-footer">🔗 現在との繋がりを見る →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 人物編タイムライン ===== -->
+      <div v-else class="era-timeline-wrap">
+        <div class="era-timeline-line" :style="{ backgroundColor: selectedEra.color }"></div>
+
+        <!-- 人物がいない時代（縄文など） -->
+        <div v-if="filteredEraPeople.length === 0 && searchQuery === '' && selectedCategory === ''" class="people-empty-state">
+          <div class="people-empty-icon">{{ selectedEra.icon }}</div>
+          <h3>この時代の人物記録はありません</h3>
+          <p>文字記録がないため、個人名が歴史に残る人物がいません。<br>「イベント編」でこの時代の出来事を確認できます。</p>
+          <button
+            class="people-empty-btn"
+            :style="{ backgroundColor: selectedEra.color }"
+            @click="viewMode = 'events'"
+          >📅 イベント編に切り替える</button>
+        </div>
+
+        <!-- 検索結果なし -->
+        <div v-else-if="filteredEraPeople.length === 0" class="no-results">
+          <div class="no-results-icon">🔍</div>
+          <h3>「{{ searchQuery || selectedCategory }}」に一致する人物が見つかりません</h3>
+          <p>検索キーワードを変えるか、フィルターをリセットしてください。</p>
+        </div>
+
+        <div
+          v-for="(person, index) in filteredEraPeople"
+          :key="person.id"
+          :class="['era-event-item', 'reveal', index % 2 === 0 ? 'item-left' : 'item-right']"
+        >
+          <div class="era-event-year-tag" :style="{ backgroundColor: selectedEra.color }">
+            {{ formatYear(person.birthYear) }}生
+          </div>
+          <div
+            class="era-event-dot"
+            :style="{ backgroundColor: selectedEra.color }"
+            @click="openModal(person)"
+          >{{ person.icon || '👤' }}</div>
+          <div
+            class="era-event-card person-card"
+            :style="{ '--card-color': selectedEra.color }"
+            @click="openModal(person)"
+          >
+            <div class="era-event-card-top">
+              <span class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ person.category }}</span>
+            </div>
+            <div class="person-card-header">
+              <span class="person-avatar">{{ person.icon }}</span>
+              <div class="person-card-info">
+                <h3 class="era-event-title person-name">{{ person.name }}</h3>
+                <p class="person-title-text">{{ person.title }}</p>
+                <p class="person-lifespan">{{ formatLifespan(person) }}</p>
+              </div>
+            </div>
+            <p class="era-event-desc">{{ person.description }}</p>
+            <div class="era-event-footer">🔗 現在との繋がりを見る →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 前後の時代ナビ -->
+      <div class="era-prev-next">
+        <button
+          v-if="prevEra"
+          class="btn-era-prev"
+          :style="{ backgroundColor: prevEra.color }"
+          @click="goToEra(prevEra.id)"
+        >← {{ prevEra.icon }} {{ prevEra.name }}</button>
+        <button class="btn-era-overview" @click="goToOverview">全体に戻る</button>
+        <button
+          v-if="nextEra"
+          class="btn-era-next"
+          :style="{ backgroundColor: nextEra.color }"
+          @click="goToEra(nextEra.id)"
+        >{{ nextEra.icon }} {{ nextEra.name }} →</button>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         モーダル（両ビュー共通・イベント・人物共通）
+    ====================================================== -->
+    <Transition name="modal">
+      <div v-if="selectedEvent" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-box">
+          <button class="modal-close-btn" @click="closeModal">✕</button>
+
+          <div class="modal-head" :style="{ background: selectedEra && selectedEra.gradient }">
+            <div class="modal-era-tag">{{ selectedEra && selectedEra.name }}</div>
+            <div class="modal-year-big">{{ modalSubtitle }}</div>
+            <h2 class="modal-title">{{ modalTitle }}</h2>
+          </div>
+
+          <div class="modal-body">
+            <!-- Wikipedia -->
+            <div class="wiki-area">
+              <div v-if="wikiLoading" class="wiki-loading">
+                <div class="loading-spinner"></div>
+                <span>Wikipedia情報を読み込み中...</span>
+              </div>
+              <div v-else-if="wikiData" class="wiki-content">
+                <img
+                  v-if="wikiData.thumbnail"
+                  :src="wikiData.thumbnail.source"
+                  :alt="modalTitle"
+                  class="wiki-thumb"
+                >
+                <p class="wiki-text">{{ wikiData.extract }}</p>
+                <a
+                  v-if="wikiData.content_urls"
+                  :href="wikiData.content_urls.desktop.page"
+                  target="_blank"
+                  rel="noopener"
+                  class="wiki-link-btn"
+                >📖 Wikipediaで詳しく読む</a>
+              </div>
+              <div v-else-if="wikiError" class="wiki-fallback">
+                <p>{{ selectedEvent.description }}</p>
+              </div>
+            </div>
+
+            <!-- 現在との繋がり -->
+            <div class="connection-box" :style="{ '--era-color': selectedEra && selectedEra.color }">
+              <h3>🔗 現在との繋がり</h3>
+              <p>{{ selectedEvent.connectionToNow }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
