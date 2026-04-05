@@ -661,6 +661,17 @@ createApp({
       route.value = parseRoute();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+    // スクロールで .reveal 要素を表示する
+    const setupReveal = () => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    };
+    // ビュー切替後に再セットアップ
+    setTimeout(setupReveal, 100);
+    window.addEventListener('hashchange', () => setTimeout(setupReveal, 100));
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && selectedEvent.value) closeModal();
     });
