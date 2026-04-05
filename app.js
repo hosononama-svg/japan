@@ -654,6 +654,8 @@ createApp({
     const wikiLoading = ref(false);
     const wikiError = ref(false);
     const currentYear = new Date().getFullYear();
+    const searchQuery = ref('');
+    const selectedCategory = ref('');
 
     window.addEventListener('hashchange', () => {
       route.value = parseRoute();
@@ -713,6 +715,39 @@ createApp({
     const getEventCount = (eraId) => (EVENTS[eraId] || []).length;
     const getPeopleCount = (eraId) => (PEOPLE[eraId] || []).length;
     const getEraTopPeople = (eraId) => (PEOPLE[eraId] || []).slice(0, 3);
+
+    const filteredEraEvents = computed(() => {
+      let list = selectedEraEvents.value;
+      if (selectedCategory.value) list = list.filter(e => e.category === selectedCategory.value);
+      if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase();
+        list = list.filter(e =>
+          e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
+        );
+      }
+      return list;
+    });
+
+    const filteredEraPeople = computed(() => {
+      let list = selectedEraPeople.value;
+      if (selectedCategory.value) list = list.filter(p => p.category === selectedCategory.value);
+      if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase();
+        list = list.filter(p =>
+          p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)
+        );
+      }
+      return list;
+    });
+
+    const currentEraCategories = computed(() => {
+      const source = viewMode.value === 'events' ? selectedEraEvents.value : selectedEraPeople.value;
+      const counts = {};
+      source.forEach(item => {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, count]) => ({ name, count }));
+    });
 
     // Wikipedia モーダル（イベント・人物共通）
     const openModal = async (item) => {
@@ -785,6 +820,11 @@ createApp({
       getEraTopPeople,
       openModal,
       closeModal,
+      searchQuery,
+      selectedCategory,
+      filteredEraEvents,
+      filteredEraPeople,
+      currentEraCategories,
     };
   },
 }).mount('#app');
