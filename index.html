@@ -311,9 +311,12 @@
             <div class="person-card-header">
               <span class="person-avatar">{{ person.icon }}</span>
               <div class="person-card-info">
-                <h3 class="era-event-title person-name">{{ person.name }}</h3>
-                <p class="person-title-text">{{ person.title }}</p>
-                <p class="person-lifespan">{{ formatLifespan(person) }}</p>
+                <h3 class="person-name">{{ person.name }}</h3>
+                <p class="person-meta">
+                  <span class="person-meta-period">{{ formatLifespan(person) }}</span>
+                  <span class="person-meta-sep">／</span>
+                  <span class="person-meta-role">{{ person.title }}</span>
+                </p>
               </div>
             </div>
             <p class="era-event-desc">{{ person.description }}</p>
