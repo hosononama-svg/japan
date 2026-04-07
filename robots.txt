@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hosononama-svg.github.io/japan/sitemap.xml
