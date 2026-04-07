@@ -353,8 +353,16 @@
 
           <div class="modal-head" :style="{ background: selectedEra && selectedEra.gradient }">
             <div class="modal-era-tag">{{ selectedEra && selectedEra.name }}</div>
-            <div class="modal-year-big">{{ modalSubtitle }}</div>
-            <h2 class="modal-title">{{ modalTitle }}</h2>
+            <!-- 人物の場合：名前を大見出し、生没年／肩書きを小見出し -->
+            <template v-if="selectedEvent.name">
+              <h2 class="modal-title modal-person-name">{{ modalTitle }}</h2>
+              <div class="modal-person-sub">{{ modalSubtitle }}</div>
+            </template>
+            <!-- 出来事の場合：年を大きく、タイトルを下に -->
+            <template v-else>
+              <div class="modal-year-big">{{ modalSubtitle }}</div>
+              <h2 class="modal-title">{{ modalTitle }}</h2>
+            </template>
           </div>
 
           <div class="modal-body">

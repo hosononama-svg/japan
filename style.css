@@ -1164,6 +1164,23 @@ body {
   z-index: 1;
 }
 
+/* 人物モーダル専用 */
+.modal-person-name {
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.modal-person-sub {
+  font-size: clamp(0.82rem, 2vw, 0.95rem);
+  font-weight: 600;
+  opacity: 0.85;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+}
+
 .modal-body { padding: 26px 30px 30px; }
 
 /* Wikipedia */

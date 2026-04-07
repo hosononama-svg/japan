@@ -177,7 +177,7 @@ createApp({
       if (!selectedEvent.value) return '';
       if (selectedEvent.value.name) {
         // 人物の場合: 生没年と肩書き
-        return `${formatLifespan(selectedEvent.value)}　${selectedEvent.value.title}`;
+        return `${formatLifespan(selectedEvent.value)}  ／  ${selectedEvent.value.title}`;
       }
       // イベントの場合: 年
       return formatYear(selectedEvent.value.year);
