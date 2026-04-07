@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>OGP画像ジェネレーター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #222; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 20px; }
+
+    /* ===== OGP本体 1200×630 ===== */
+    #ogp {
+      width: 1200px;
+      height: 630px;
+      position: relative;
+      overflow: hidden;
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      background: #0a0a1a;
+      flex-shrink: 0;
+    }
+
+    /* 背景グラデーション */
+    .bg-grad {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(139, 69, 19, 0.35) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 30%, rgba(70, 130, 180, 0.3) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 80%, rgba(128, 0, 128, 0.2) 0%, transparent 50%),
+        linear-gradient(135deg, #0d0d2b 0%, #1a0a1a 40%, #0a1020 100%);
+    }
+
+    /* 和柄風ドット */
+    .dots {
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* タイムラインライン（装飾） */
+    .timeline-line {
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(255,200,100,0.4) 20%,
+        rgba(255,200,100,0.6) 50%,
+        rgba(255,200,100,0.4) 80%,
+        transparent 100%
+      );
+      transform: translateX(-50%);
+    }
+
+    /* 時代ドット（タイムライン上） */
+    .era-dots {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      height: 100%;
+      align-items: center;
+      justify-content: space-around;
+      padding: 40px 0;
+    }
+    .era-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,200,100,0.7);
+      box-shadow: 0 0 8px rgba(255,200,100,0.8);
+    }
+
+    /* 左コンテンツ */
+    .left {
+      position: absolute;
+      left: 60px; top: 0; bottom: 0;
+      width: 500px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .site-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,200,100,0.15);
+      border: 1px solid rgba(255,200,100,0.4);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: rgba(255,200,100,0.9);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      width: fit-content;
+    }
+
+    .main-title {
+      font-size: 68px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+    .main-title span {
+      color: #f5c842;
+    }
+
+    .sub-title {
+      font-size: 22px;
+      color: rgba(255,255,255,0.7);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .stats {
+      display: flex;
+      gap: 28px;
+      margin-top: 8px;
+    }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-num {
+      font-size: 32px;
+      font-weight: 900;
+      color: #f5c842;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    /* 右コンテンツ（時代カード列） */
+    .right {
+      position: absolute;
+      right: 55px; top: 0; bottom: 0;
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .era-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .era-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(4px);
+    }
+    .era-chip-icon { font-size: 20px; }
+    .era-chip-name { font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.9); }
+    .era-chip-year { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+    /* 下部帯 */
+    .bottom-bar {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 48px;
+      background: rgba(245,200,66,0.12);
+      border-top: 1px solid rgba(245,200,66,0.25);
+      display: flex;
+      align-items: center;
+      padding: 0 60px;
+      gap: 12px;
+    }
+    .bottom-bar-icon { font-size: 18px; }
+    .bottom-bar-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .bottom-url {
+      margin-left: auto;
+      font-size: 13px;
+      color: rgba(255,200,100,0.6);
+      font-weight: 700;
+    }
+
+    /* ===== ボタン ===== */
+    #btn {
+      background: #f5c842;
+      color: #111;
+      border: none;
+      padding: 14px 36px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #btn:hover { background: #e0b530; }
+    #note {
+      color: #aaa;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="ogp">
+    <div class="bg-grad"></div>
+    <div class="dots"></div>
+    <div class="timeline-line"></div>
+
+    <div class="era-dots">
+      <div class="era-dot"></div>
+      <div class="era-dot"></div>
+      <div class="era-dot"></div>
+      <div class="era-dot"></div>
+      <div class="era-dot"></div>
+      <div class="era-dot"></div>
+      <div class="era-dot"></div>
+    </div>
+
+    <div class="left">
+      <div class="site-tag">🗾 JAPAN HISTORY TIMELINE</div>
+      <div class="main-title"><span>日本史</span><br>タイムライン</div>
+      <div class="sub-title">縄文〜令和 約16,000年の旅</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num">15</div>
+          <div class="stat-label">時代区分</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">220<span style="font-size:18px">+</span></div>
+          <div class="stat-label">歴史的出来事</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">130<span style="font-size:18px">+</span></div>
+          <div class="stat-label">歴史上の人物</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="era-list">
+        <div class="era-chip"><span class="era-chip-icon">🏺</span><div><div class="era-chip-name">縄文時代</div><div class="era-chip-year">〜紀元前300年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">🌾</span><div><div class="era-chip-name">弥生時代</div><div class="era-chip-year">前300〜250年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">⛩️</span><div><div class="era-chip-name">飛鳥時代</div><div class="era-chip-year">593〜710年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">🦌</span><div><div class="era-chip-name">奈良時代</div><div class="era-chip-year">710〜794年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">🌸</span><div><div class="era-chip-name">平安時代</div><div class="era-chip-year">794〜1185年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">⚔️</span><div><div class="era-chip-name">江戸時代</div><div class="era-chip-year">1603〜1868年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">🏭</span><div><div class="era-chip-name">明治時代</div><div class="era-chip-year">1868〜1912年</div></div></div>
+        <div class="era-chip"><span class="era-chip-icon">🌐</span><div><div class="era-chip-name">令和</div><div class="era-chip-year">2019年〜</div></div></div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <span class="bottom-bar-icon">🔍</span>
+      <span class="bottom-bar-text">インタラクティブに探索できる日本史サイト</span>
+      <span class="bottom-url">hosononama-svg.github.io/japan</span>
+    </div>
+  </div>
+
+  <button id="btn" onclick="downloadOgp()">ogp.png としてダウンロード</button>
+  <div id="note">
+    ボタンを押すと自動でogp.pngがダウンロードされます。<br>
+    ダウンロードしたファイルを <code style="color:#f5c842">japan/</code> フォルダに置いてください。
+  </div>
+
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    async function downloadOgp() {
+      const btn = document.getElementById('btn');
+      btn.textContent = '生成中...';
+      btn.disabled = true;
+      try {
+        const canvas = await html2canvas(document.getElementById('ogp'), {
+          scale: 1,
+          useCORS: true,
+          backgroundColor: null,
+          logging: false,
+        });
+        const link = document.createElement('a');
+        link.download = 'ogp.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.textContent = 'ダウンロード完了！';
+      } catch(e) {
+        btn.textContent = 'エラー（下の手順で手動保存してください）';
+        alert('自動ダウンロードに失敗しました。\nCtrl+Shift+I → Console → html2canvas(...) を試すか、\nスクリーンショットで代用してください。');
+      }
+    }
+  </script>
+</body>
+</html>
