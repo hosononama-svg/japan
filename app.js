@@ -108,9 +108,14 @@ createApp({
     const getPeopleCount = (eraId) => (PEOPLE[eraId] || []).length;
     const getEraTopPeople = (eraId) => (PEOPLE[eraId] || []).slice(0, 3);
 
+    const EVENT_CATS_MODERN   = ['政治', '外交', '内政', '戦争', '文化', '経済', '宗教'];
+    const EVENT_CATS_PREMODERN = ['政治', '外交', '内政', '戦争', '文化', '宗教'];
+    const PEOPLE_CATS          = ['政治', '宗教', '文化', '経済'];
+    const MODERN_ERA_IDS       = ['meiji', 'taisho', 'showa', 'heisei', 'reiwa'];
+
     const filteredEraEvents = computed(() => {
       let list = selectedEraEvents.value;
-      if (selectedCategory.value) list = list.filter(e => e.category === selectedCategory.value);
+      if (selectedCategory.value) list = list.filter(e => e.category.includes(selectedCategory.value));
       if (searchQuery.value) {
         const q = searchQuery.value.toLowerCase();
         list = list.filter(e =>
@@ -122,7 +127,7 @@ createApp({
 
     const filteredEraPeople = computed(() => {
       let list = selectedEraPeople.value;
-      if (selectedCategory.value) list = list.filter(p => p.category === selectedCategory.value);
+      if (selectedCategory.value) list = list.filter(p => p.category.includes(selectedCategory.value));
       if (searchQuery.value) {
         const q = searchQuery.value.toLowerCase();
         list = list.filter(p =>
@@ -133,12 +138,21 @@ createApp({
     });
 
     const currentEraCategories = computed(() => {
-      const source = viewMode.value === 'events' ? selectedEraEvents.value : selectedEraPeople.value;
-      const counts = {};
-      source.forEach(item => {
-        counts[item.category] = (counts[item.category] || 0) + 1;
-      });
-      return Object.entries(counts).map(([name, count]) => ({ name, count }));
+      const eraId = route.value.eraId;
+      if (!eraId) return [];
+      if (viewMode.value === 'people') {
+        const items = PEOPLE[eraId] || [];
+        return PEOPLE_CATS
+          .map(name => ({ name, count: items.filter(p => p.category.includes(name)).length }))
+          .filter(c => c.count > 0);
+      } else {
+        const isModern = MODERN_ERA_IDS.includes(eraId);
+        const cats = isModern ? EVENT_CATS_MODERN : EVENT_CATS_PREMODERN;
+        const items = EVENTS[eraId] || [];
+        return cats
+          .map(name => ({ name, count: items.filter(e => e.category.includes(name)).length }))
+          .filter(c => c.count > 0);
+      }
     });
 
     // Wikipedia モーダル（イベント・人物共通）

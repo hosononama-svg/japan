@@ -293,7 +293,7 @@
             @click="openModal(event)"
           >
             <div class="era-event-card-top">
-              <span class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ event.category }}</span>
+              <span v-for="cat in event.category" :key="cat" class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ cat }}</span>
             </div>
             <h3 class="era-event-title">{{ event.title }}</h3>
             <p class="era-event-desc">{{ event.description }}</p>
@@ -344,7 +344,7 @@
             @click="openModal(person)"
           >
             <div class="era-event-card-top">
-              <span class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ person.category }}</span>
+              <span v-for="cat in person.category" :key="cat" class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ cat }}</span>
             </div>
             <div class="person-card-header">
               <span class="person-avatar">{{ person.icon }}</span>

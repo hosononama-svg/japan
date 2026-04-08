@@ -890,12 +890,12 @@ body {
   background: linear-gradient(to bottom right, #ffffff, #fffdf9);
 }
 
-.era-event-card-top { margin-bottom: 10px; }
+.era-event-card-top { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
 .era-event-cat {
   color: white;
-  padding: 3px 12px;
+  padding: 3px 10px;
   border-radius: 12px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.03em;
   display: inline-block;
