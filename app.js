@@ -1,4 +1,4 @@
-const { createApp, ref, computed } = Vue;
+const { createApp, ref, computed, watch, nextTick } = Vue;
 
 // ===== ルーティング =====
 function parseRoute() {
@@ -48,7 +48,7 @@ createApp({
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
       }, { threshold: 0.1 });
-      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+      document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
     };
     // ビュー切替後に再セットアップ
     setTimeout(setupReveal, 100);
@@ -195,6 +195,11 @@ createApp({
       }
       // イベントの場合: 年
       return formatYear(selectedEvent.value.year);
+    });
+
+    // フィルター・検索変更後に新しいDOM要素をreveal監視対象に追加
+    watch([selectedCategory, searchQuery, viewMode], () => {
+      nextTick(() => setupReveal());
     });
 
     return {
