@@ -784,7 +784,7 @@ body {
 .era-timeline-wrap {
   max-width: 980px;
   margin: 0 auto;
-  padding: 52px 20px 68px;
+  padding: 0 20px;
   position: relative;
 }
 
@@ -809,8 +809,9 @@ body {
 .era-event-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 56px;
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
   padding-top: 28px;
 }
 .era-event-item.item-left {
@@ -860,7 +861,7 @@ body {
   box-shadow: 0 8px 28px rgba(0,0,0,0.3);
 }
 
-/* イベントカード */
+/* イベントカード：〇ホバー時のみ表示 */
 .era-event-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -868,10 +869,14 @@ body {
   border-left: 5px solid var(--card-color);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 0.25s var(--ease), box-shadow 0.25s, border-left-width 0.15s;
   width: 100%;
   position: relative;
   overflow: hidden;
+  /* デフォルト: 非表示 */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.2s, border-left-width 0.12s;
 }
 .era-event-card::before {
   content: '';
@@ -883,8 +888,14 @@ body {
   background: linear-gradient(to right, var(--card-color), transparent);
   opacity: 0.4;
 }
-.era-event-card:hover {
-  transform: translateY(-6px);
+/* 〇にホバーしたらカード表示 */
+.era-event-item:hover .era-event-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.era-event-item:hover .era-event-card:hover {
+  transform: translateY(-5px);
   box-shadow: 0 12px 36px rgba(0,0,0,0.13);
   border-left-width: 7px;
   background: linear-gradient(to bottom right, #ffffff, #fffdf9);
@@ -924,7 +935,7 @@ body {
   gap: 4px;
   transition: gap 0.2s;
 }
-.era-event-card:hover .era-event-footer { gap: 8px; }
+.era-event-item:hover .era-event-card:hover .era-event-footer { gap: 8px; }
 
 /* ===== 人物カード ===== */
 .person-card { border-left-color: var(--card-color); }
@@ -1305,12 +1316,26 @@ body {
 @media (max-width: 768px) {
   .era-timeline-line { left: 20px; }
 
-  .era-event-item { padding-top: 18px; }
+  .era-event-item {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    padding-top: 18px;
+    margin-bottom: 48px;
+  }
   .era-event-item.item-left,
   .era-event-item.item-right {
     flex-direction: row;
     padding-right: 0;
     padding-left: 62px;
+  }
+  .era-timeline-wrap { height: auto !important; padding-bottom: 40px; }
+  /* モバイルはカード常時表示 */
+  .era-event-card {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
   }
 
   .era-event-year-tag { left: 20px; top: 0; font-size: 0.7rem; padding: 3px 10px; }

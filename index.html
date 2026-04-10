@@ -264,7 +264,7 @@
       </div>
 
       <!-- ===== イベント編タイムライン ===== -->
-      <div v-if="viewMode === 'events'" class="era-timeline-wrap">
+      <div v-if="viewMode === 'events'" class="era-timeline-wrap" :style="{ height: eraEventsHeight + 'px' }">
         <div class="era-timeline-line" :style="{ backgroundColor: selectedEra.color }"></div>
 
         <!-- 検索結果なし -->
@@ -275,35 +275,36 @@
         </div>
 
         <div
-          v-for="(event, index) in filteredEraEvents"
-          :key="event.id"
-          :class="['era-event-item', 'reveal', index % 2 === 0 ? 'item-left' : 'item-right']"
+          v-for="(item, index) in positionedEvents"
+          :key="item.item.id"
+          :class="['era-event-item', index % 2 === 0 ? 'item-left' : 'item-right']"
+          :style="{ top: item.top + 'px' }"
         >
           <div class="era-event-year-tag" :style="{ backgroundColor: selectedEra.color }">
-            {{ formatYear(event.year) }}
+            {{ formatYear(item.item.year) }}
           </div>
           <div
             class="era-event-dot"
             :style="{ backgroundColor: selectedEra.color }"
-            @click="openModal(event)"
-          >{{ event.icon || '📌' }}</div>
+            @click="openModal(item.item)"
+          >{{ item.item.icon || '📌' }}</div>
           <div
             class="era-event-card"
             :style="{ '--card-color': selectedEra.color }"
-            @click="openModal(event)"
+            @click="openModal(item.item)"
           >
             <div class="era-event-card-top">
-              <span v-for="cat in event.category" :key="cat" class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ cat }}</span>
+              <span v-for="cat in item.item.category" :key="cat" class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ cat }}</span>
             </div>
-            <h3 class="era-event-title">{{ event.title }}</h3>
-            <p class="era-event-desc">{{ event.description }}</p>
+            <h3 class="era-event-title">{{ item.item.title }}</h3>
+            <p class="era-event-desc">{{ item.item.description }}</p>
             <div class="era-event-footer">🔗 現在との繋がりを見る →</div>
           </div>
         </div>
       </div>
 
       <!-- ===== 人物編タイムライン ===== -->
-      <div v-else class="era-timeline-wrap">
+      <div v-else class="era-timeline-wrap" :style="{ height: eraPeopleHeight + 'px' }">
         <div class="era-timeline-line" :style="{ backgroundColor: selectedEra.color }"></div>
 
         <!-- 人物がいない時代（縄文など） -->
@@ -326,38 +327,39 @@
         </div>
 
         <div
-          v-for="(person, index) in filteredEraPeople"
-          :key="person.id"
-          :class="['era-event-item', 'reveal', index % 2 === 0 ? 'item-left' : 'item-right']"
+          v-for="(item, index) in positionedPeople"
+          :key="item.item.id"
+          :class="['era-event-item', index % 2 === 0 ? 'item-left' : 'item-right']"
+          :style="{ top: item.top + 'px' }"
         >
           <div class="era-event-year-tag" :style="{ backgroundColor: selectedEra.color }">
-            {{ formatYear(person.birthYear) }}生
+            {{ formatYear(item.item.birthYear) }}生
           </div>
           <div
             class="era-event-dot"
             :style="{ backgroundColor: selectedEra.color }"
-            @click="openModal(person)"
-          >{{ person.icon || '👤' }}</div>
+            @click="openModal(item.item)"
+          >{{ item.item.icon || '👤' }}</div>
           <div
             class="era-event-card person-card"
             :style="{ '--card-color': selectedEra.color }"
-            @click="openModal(person)"
+            @click="openModal(item.item)"
           >
             <div class="era-event-card-top">
-              <span v-for="cat in person.category" :key="cat" class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ cat }}</span>
+              <span v-for="cat in item.item.category" :key="cat" class="era-event-cat" :style="{ backgroundColor: selectedEra.color }">{{ cat }}</span>
             </div>
             <div class="person-card-header">
-              <span class="person-avatar">{{ person.icon }}</span>
+              <span class="person-avatar">{{ item.item.icon }}</span>
               <div class="person-card-info">
-                <h3 class="person-name">{{ person.name }}</h3>
+                <h3 class="person-name">{{ item.item.name }}</h3>
                 <p class="person-meta">
-                  <span class="person-meta-period">{{ formatLifespan(person) }}</span>
+                  <span class="person-meta-period">{{ formatLifespan(item.item) }}</span>
                   <span class="person-meta-sep">／</span>
-                  <span class="person-meta-role">{{ person.title }}</span>
+                  <span class="person-meta-role">{{ item.item.title }}</span>
                 </p>
               </div>
             </div>
-            <p class="era-event-desc">{{ person.description }}</p>
+            <p class="era-event-desc">{{ item.item.description }}</p>
             <div class="era-event-footer">🔗 現在との繋がりを見る →</div>
           </div>
         </div>

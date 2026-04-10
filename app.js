@@ -155,6 +155,83 @@ createApp({
       }
     });
 
+    // ===== 時間比例タイムライン位置計算 =====
+    const TIMELINE_PAD_TOP  = 60;  // px
+    const TIMELINE_PAD_BOT  = 120; // px
+    const MIN_ITEM_SPACING  = 80;  // px (最小間隔)
+
+    function calcPositions(items, yearFn, eraStart, eraEnd) {
+      if (!items.length) return { positioned: [], height: 600 };
+      const span = eraEnd - eraStart;
+      // ターゲット高さ: 短い時代は最低600px、長い時代は最大3200px
+      const targetH = span > 0 ? Math.max(600, Math.min(3200, span * 3)) : 800;
+      // 生ポジション（比例）
+      let raw = items.map(item => ({
+        item,
+        rawTop: span > 0
+          ? TIMELINE_PAD_TOP + ((yearFn(item) - eraStart) / span) * targetH
+          : TIMELINE_PAD_TOP,
+      }));
+      // 最小間隔を強制
+      let result = [];
+      let prev = -Infinity;
+      for (const r of raw) {
+        const top = Math.max(r.rawTop, prev + MIN_ITEM_SPACING);
+        result.push({ item: r.item, top });
+        prev = top;
+      }
+      const height = result[result.length - 1].top + TIMELINE_PAD_BOT;
+      return { positioned: result, height };
+    }
+
+    const positionedEvents = computed(() => {
+      if (!selectedEra.value) return [];
+      const era = selectedEra.value;
+      const { positioned } = calcPositions(
+        filteredEraEvents.value,
+        e => e.year,
+        era.startYear,
+        era.endYear ?? currentYear
+      );
+      return positioned;
+    });
+
+    const positionedPeople = computed(() => {
+      if (!selectedEra.value) return [];
+      const era = selectedEra.value;
+      const { positioned } = calcPositions(
+        filteredEraPeople.value,
+        p => p.birthYear ?? era.startYear,
+        era.startYear,
+        era.endYear ?? currentYear
+      );
+      return positioned;
+    });
+
+    const eraEventsHeight = computed(() => {
+      if (!selectedEra.value) return 600;
+      const era = selectedEra.value;
+      const { height } = calcPositions(
+        filteredEraEvents.value,
+        e => e.year,
+        era.startYear,
+        era.endYear ?? currentYear
+      );
+      return height;
+    });
+
+    const eraPeopleHeight = computed(() => {
+      if (!selectedEra.value) return 600;
+      const era = selectedEra.value;
+      const { height } = calcPositions(
+        filteredEraPeople.value,
+        p => p.birthYear ?? era.startYear,
+        era.startYear,
+        era.endYear ?? currentYear
+      );
+      return height;
+    });
+
     // Wikipedia モーダル（イベント・人物共通）
     const openModal = async (item) => {
       selectedEvent.value = item;
@@ -236,6 +313,10 @@ createApp({
       filteredEraEvents,
       filteredEraPeople,
       currentEraCategories,
+      positionedEvents,
+      positionedPeople,
+      eraEventsHeight,
+      eraPeopleHeight,
     };
   },
 }).mount('#app');
